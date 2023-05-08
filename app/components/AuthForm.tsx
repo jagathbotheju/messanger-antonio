@@ -10,12 +10,17 @@ import Input from "./inputs/Input";
 import Button from "./Button";
 import AuthSocialButton from "./AuthSocialButton";
 import { BsGithub, BsGoogle } from "react-icons/bs";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 type Variant = "LOGIN" | "REGISTER";
 
 const AuthForm = () => {
   const [variant, setVariant] = useState<Variant>("LOGIN");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const toggleVariant = useCallback(() => {
     if (variant === "LOGIN") {
@@ -41,27 +46,63 @@ const AuthForm = () => {
     setLoading(true);
     if (variant === "REGISTER") {
       //axios register
+      axios
+        .post("/api/register", data)
+        .then(() => toast.success("User Registered Successfully"))
+        .catch((error) => {
+          console.log(error?.response?.data);
+          toast.error(`${error?.response?.data}` || "Something went wrong!");
+        })
+        .finally(() => setLoading(false));
     }
 
     if (variant === "LOGIN") {
       //NextAuth login
+      signIn("credentials", {
+        ...data,
+        redirect: false,
+        callbackUrl: "/",
+      })
+        .then((callback) => {
+          if (callback?.ok && !callback?.error) {
+            toast.success(`You are Logged In`);
+          }
+          if (callback?.error) {
+            toast.error(callback.error);
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+          toast.error("Internal Server Error");
+        })
+        .finally(() => setLoading(false));
     }
   };
 
   const socialAction = (action: string) => {
     setLoading(true);
     //NextAuth social login
+    signIn(action, { redirect: false })
+      .then((callback) => {
+        if (callback?.ok && !callback?.error) {
+          toast.success("You are Logged In");
+        }
+        if (callback?.error) {
+          toast.error(callback.error);
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+        toast.error("Internal Server Error");
+      })
+      .finally(() => setLoading(false));
   };
   console.log(`loading ${loading}`);
 
   return (
     <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div className="bg-white px-4 py-8 shadow sm-rounded-lg sm:px-10">
-        <form
-          className="space-y-6"
-          onSubmit={handleSubmit(onSubmit)}
-          autoComplete="off"
-        >
+        <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
           {variant === "REGISTER" && (
             <Input
               label="Name"
