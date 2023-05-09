@@ -1,3 +1,4 @@
+import AuthProvider from "./components/AuthProvider";
 import ToastProvider from "./components/ToastProvider";
 import "./globals.css";
 import { Inter } from "next/font/google";
@@ -17,7 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );
